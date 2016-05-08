@@ -26,7 +26,6 @@
 #
 
 import init.mmi.usb.rc
-import init.target.rc
 
 on early-init
     chown system graphics /sys/devices/virtual/graphics/fb0/idle_time
