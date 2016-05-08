@@ -1,0 +1,11 @@
+[
+  {
+    "repository": "android_external_bson",
+    "target_path": "external/bson"
+  },
+  {
+    "repository": "android_device_qcom_common",
+    "target_path": "device/qcom/common"
+  }
+]
+
