@@ -58,7 +58,7 @@ TARGET_KERNEL_CONFIG := cm_pme_defconfig
 TARGET_PREBUILT_KERNEL := device/htc/pme/kernel
 
 # Asserts
-TARGET_OTA_ASSERT_DEVICE := pme,pmeuwl,pmeuhl
+TARGET_OTA_ASSERT_DEVICE := pme,pmewl,pmeuhl
 
 # Audio
 AUDIO_FEATURE_ENABLED_DS2_DOLBY_DAP := true
