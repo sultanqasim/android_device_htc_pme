@@ -1,0 +1,35 @@
+# Create absolute folder
+on fs
+        mkdir /persdata 0750 system system
+        mkdir /persdata/absolute 0750 system system
+
+# Mount absolute partition for super CID
+on property:ro.cid=11111111
+        wait /dev/block/bootdevice/by-name/absolute
+        e2fsck /dev/block/bootdevice/by-name/absolute
+        mount ext4 /dev/block/bootdevice/by-name/absolute /persdata/absolute nosuid nodev barrier=1,errors=continue
+        chown system system /persdata/absolute
+        chmod 0750 /persdata/absolute
+# restorecon absolute partition.
+        restorecon_recursive /persdata/absolute
+
+# Mount absolute partition for Orange UK(EE) SKU
+on property:ro.cid=ORANG001
+        wait /dev/block/bootdevice/by-name/absolute
+        e2fsck /dev/block/bootdevice/by-name/absolute
+        mount ext4 /dev/block/bootdevice/by-name/absolute /persdata/absolute nosuid nodev barrier=1,errors=continue
+        chown system system /persdata/absolute
+        chmod 0750 /persdata/absolute
+# restorecon absolute partition.
+        restorecon_recursive /persdata/absolute
+
+# Mount absolute partition for Orange UK(EE) SKU
+on property:ro.cid=EVE__001
+        wait /dev/block/bootdevice/by-name/absolute
+        e2fsck /dev/block/bootdevice/by-name/absolute
+        mount ext4 /dev/block/bootdevice/by-name/absolute /persdata/absolute nosuid nodev barrier=1,errors=continue
+        chown system system /persdata/absolute
+        chmod 0750 /persdata/absolute
+# restorecon absolute partition.
+        restorecon_recursive /persdata/absolute
+

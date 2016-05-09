@@ -1,0 +1,5 @@
+#Enabled now
+service fingerprintd /system/bin/fingerprintd
+    class late_start
+    user system
+    group system input

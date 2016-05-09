@@ -1,0 +1,11 @@
+service qcom-post-boot /system/bin/sh /system/etc/init.qcom.ftm.post_boot.sh
+    class late_start
+    user root
+    disabled
+    oneshot
+
+on property:ro.boot.mode=ftm
+   trigger late-ftm
+
+on late-ftm
+   start qcom-post-boot

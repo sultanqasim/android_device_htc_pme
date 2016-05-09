@@ -1,0 +1,179 @@
+########################
+# # init.htc.common.rc #
+########################
+
+#++ 2014.10.29 USB Team, PCN00026 ++
+import init.htc.usb.rc
+#-- 2014.10.29 USB Team, PCN00026 --
+
+import init.htc.extra.rc
+
+on fs
+    mkdir /firmware 0771 system system
+    mkdir /firmware/image 0771 system system
+
+    #RIL+
+    #mount rfg_3
+    mkdir /firmware/wsd 0500 rfs rfs
+    wait /dev/block/bootdevice/by-name/rfg_3
+    mount vfat /dev/block/bootdevice/by-name/rfg_3 /firmware/wsd ro shortname=lower,uid=3012,gid=3012,dmask=277,fmask=377
+    #RIL-
+
+    # Mount radio image
+    mkdir /firmware/radio 0771 system system
+    wait /dev/block/bootdevice/by-name/radio
+    mount vfat /dev/block/bootdevice/by-name/radio /firmware/radio ro shortname=lower,uid=1000,gid=1000,dmask=227,fmask=337
+
+    # Mount adsp image
+    mkdir /firmware/adsp 0771 system system
+    wait /dev/block/bootdevice/by-name/adsp
+    mount vfat /dev/block/bootdevice/by-name/adsp /firmware/adsp ro shortname=lower,uid=1000,gid=1000,dmask=227,fmask=337
+
+    # Mount carrier partition
+    mkdir /carrier 0770 system carrier
+    wait /dev/block/bootdevice/by-name/carrier
+    mount ext4 /dev/block/bootdevice/by-name/carrier /carrier nosuid nodev noatime barrier=1,grpid
+    chown system carrier /carrier
+    chmod 0770 /carrier
+    # restorecon carrier partition.
+    restorecon_recursive /carrier
+
+    wait /system/bin/sh
+    class_start firmware-link
+    wait /firmware/image/.adsp_done
+    wait /firmware/image/.radio_done
+    wait /firmware/image/.sec_done
+    setprop ro.boot.firmware.cpe 1
+
+    # HTC feature: Support multiple firmware image mount points
+    write /sys/module/firmware_class/parameters/fw_path /firmware/adsp,/firmware/wcnss,/firmware/cpe,/firmware/slpi
+
+#SSD_DISP start
+    chown system graphics /sys/class/leds/lcd-backlight/cabc_level_ctl
+    chown system graphics /sys/class/leds/lcd-backlight/color_temp_ctl
+    chown system graphics /sys/class/leds/lcd-backlight/color_profile_ctl
+    chown system system /sys/class/leds/lcd-backlight/burst_switch
+    chown system system /sys/class/leds/lcd-backlight-nits/brightness
+#SSD_DISP end
+
+# maintain the list of processes name for kernel monitoring usage
+    chown system /sys/process/task_comm_list
+
+on boot
+    # Assign androidboot.ddrsize to ro.product.ram
+    setprop ro.product.ram ${ro.boot.ddrsize}
+    # remove /dev/mem and dev/kmem
+    rm /dev/mem
+    rm /dev/kmem
+
+# NFC ++
+# permissions for NFC
+    chmod 0600 /dev/pn544
+    chown nfc nfc /dev/pn544
+# NFC --
+
+service fwnk-adsp  /system/bin/sh /init.qcom.firmware_links.sh /firmware/adsp /firmware/image "adsp*" adsp
+    class firmware-link
+    oneshot
+
+#HTC_AUD_START
+service fwnk-cpe  /system/bin/sh /init.qcom.firmware_links.sh /firmware/adsp /firmware/image "cpe*" cpe
+    class firmware-link
+    oneshot
+#HTC_AUD_END
+
+service fwnk-radio /system/bin/sh /init.qcom.firmware_links.sh /firmware/radio /firmware/image "modem* mba* radiover* version* qdsp6m* msadp*" radio
+    class firmware-link
+    oneshot
+
+service fwnk-sec  /system/bin/sh /init.qcom.firmware_links.sh /system/etc/firmware /firmware/image "keymaste* gpta*" sec
+    class firmware-link
+    oneshot
+
+service htc-post-boot /system/bin/sh /system/etc/init.htc.post_boot.sh
+    class late_start
+    user root
+    disabled
+    oneshot
+
+on property:sys.boot_completed=1
+    start mocana-startup
+    start htc-post-boot
+
+on property:sys.qseecomd.stage=2
+    start wv-prov
+
+service mocana-startup /system/bin/sh /system/etc/init.mocana.sh
+    class late_start
+    user root
+    disabled
+    oneshot
+
+service wv-prov /system/bin/hcheck-v2
+    class late_start
+    user root
+    disabled
+    oneshot
+
+# bugreport is triggered by the KEY_VOL-UP and KEY_VOL-DOWN keycodes
+service bugreport /system/bin/dumpstate -d -p -B \
+ -o /data/data/com.android.shell/files/bugreports/bugreport
+    disabled
+    cgroup bg
+    oneshot
+    keycodes 114 115
+
+# when temperature protection is disabled, bg anr is disabled as well
+on property:ro.boot.temp_protect=0
+    setprop profiler.debug.hide_bg_anr "1"
+
+on property:sys.vm.max_map_count=*
+    write /proc/sys/vm/max_map_count ${sys.vm.max_map_count}
+
+# HTC HRDUMP - BEGIN
+on post-fs-data
+     start hrdump
+
+service hrdump /system/bin/hrdump -s
+    disabled
+    oneshot
+    ioprio idle 0
+    cgroup bg
+
+on property:ro.boot.htc.hrdump=detected
+        setprop debug.htc.hrdump "detected"
+
+# HTC HRDUMP - END
+
+# hang_detector - BEGIN
+service hang_start_moni /system/bin/hang_detector -b
+    user root
+    disabled
+    oneshot
+
+on property:init.svc.zygote=restarting
+    start hang_start_moni
+
+service hang_end_moni /system/bin/hang_detector -e
+    user root
+    disabled
+    oneshot
+
+on property:sys.boot_completed=1
+    start hang_end_moni
+
+service hang_daemon /system/bin/hang_detector -d
+    user root
+    socket hang_detector stream 0666 system system
+    disabled
+
+on post-fs-data
+    start hang_daemon
+# hang_detector - END
+
+# HTC minidump for TellHTC - BEGIN
+service minidump-sh /system/bin/sh /init.minidump.sh
+    class late_start
+    user root
+    oneshot
+# HTC minidump for TellHTC - END

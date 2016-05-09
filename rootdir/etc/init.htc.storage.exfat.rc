@@ -1,0 +1,3 @@
+on boot
+# exfat
+    insmod /system/lib/modules/texfat.ko

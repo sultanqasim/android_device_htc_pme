@@ -1,0 +1,173 @@
+# Copyright (c) 2013, HTC Corp. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
+#       with the distribution.
+#     * Neither the name of Code Aurora Forum, Inc. nor the names of its
+#       contributors may be used to endorse or promote products derived
+#       from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+on init
+# init PnPMgr node
+    chmod 0664 /sys/power/pnpmgr/apps/media_mode
+    chown media system /sys/power/pnpmgr/apps/media_mode
+    chown system /sys/power/pnpmgr/apps/activity_trigger
+    chown system /sys/power/pnpmgr/apps/non_activity_trigger
+    chown system /sys/power/pnpmgr/launch_event
+    chown system /sys/power/powersave
+    chown system /sys/power/pnpmgr/cluster/big/user_perf_lvl
+    chown system /sys/power/pnpmgr/cluster/big/user_lvl_to_min_freq
+    chown system /sys/power/pnpmgr/cluster/big/hotplug/user_cpunum_max
+    chown system /sys/power/pnpmgr/cluster/big/hotplug/user_cpunum_min
+    chown system /sys/power/pnpmgr/cluster/little/user_perf_lvl
+    chown system /sys/power/pnpmgr/cluster/little/user_lvl_to_min_freq
+    chown system /sys/power/pnpmgr/cluster/little/hotplug/user_cpunum_max
+    chown system /sys/power/pnpmgr/cluster/little/hotplug/user_cpunum_min
+    chown system /sys/power/pnpmgr/touch_boost
+    chown system /sys/power/pnpmgr/long_duration_touch_boost
+    chown system /sys/power/wait_for_fb_status
+    chmod 0664 /sys/power/pnpmgr/display/single_layer_yuv
+    chown system /sys/power/pnpmgr/display/single_layer_yuv
+    chmod 0664 /sys/power/pnpmgr/display/single_layer_rgb
+    chown system /sys/power/pnpmgr/display/single_layer_rgb
+    chmod 0664 /sys/power/pnpmgr/display/virtual_display
+    chown system /sys/power/pnpmgr/display/virtual_display
+    chmod 0664 /sys/power/pnpmgr/apps/call_sync
+    chown system /sys/power/pnpmgr/apps/call_sync
+
+    write /sys/power/pnpmgr/cluster/big/hotplug/mp_cpunum_max 4
+    write /sys/power/pnpmgr/cluster/big/hotplug/mp_cpunum_min 1
+    write /sys/power/pnpmgr/cluster/little/hotplug/mp_cpunum_max 4
+    write /sys/power/pnpmgr/cluster/little/hotplug/mp_cpunum_min 0
+    write /sys/power/pnpmgr/thermal/cpu_asn 0
+    write /sys/power/pnpmgr/apps/activity_trigger "booting"
+    write /sys/power/pnpmgr/long_duration_touch_boost_duration 3000
+    write /sys/power/pnpmgr/touch_boost_duration 200
+
+#CPUSET
+    write /dev/cpuset/cpu_exclusive 0
+    write /dev/cpuset/background/cpus "0"
+    write /dev/cpuset/system-background/cpus "0-3"
+    write /dev/cpuset/foreground/cpus "0-3"
+
+# HTC SSD Battery - BEGIN
+    chown system system /sys/class/power_supply/battery/full_level_dis_batt_chg
+    chmod 0220 /sys/class/power_supply/battery/full_level_dis_batt_chg
+    chown radio radio /sys/class/power_supply/battery/phone_call
+    chmod 0660 /sys/class/power_supply/battery/phone_call
+    chown media media /sys/class/power_supply/battery/play_music
+    chmod 0220 /sys/class/power_supply/battery/play_music
+    chown radio radio /sys/class/power_supply/battery/network_search
+    chmod 0220 /sys/class/power_supply/battery/network_search
+    chown system system /sys/class/power_supply/battery/navigation
+    chmod 0220 /sys/class/power_supply/battery/navigation
+    chown system system /sys/class/power_supply/battery/disable_limit_chg
+    chmod 0220 /sys/class/power_supply/battery/disable_limit_chg
+# HTC SSD Battery - END
+
+    chown root system /sys/devices/system/cpu/cpu1/online
+    chmod 0664 /sys/devices/system/cpu/cpu1/online
+    chown root system /sys/devices/system/cpu/cpu2/online
+    chmod 0664 /sys/devices/system/cpu/cpu2/online
+    chown root system /sys/devices/system/cpu/cpu3/online
+    chmod 0664 /sys/devices/system/cpu/cpu3/online
+    chown root system /sys/devices/system/cpu/cpu4/online
+    chmod 0664 /sys/devices/system/cpu/cpu4/online
+    chown root system /sys/power/pnpmgr/thermal/cpu_asn
+    chmod 0664 /sys/power/pnpmgr/thermal/cpu_asn
+
+    chown system system /sys/power/pnpmgr/apps/trace_trigger
+    chmod 0664 /sys/power/pnpmgr/apps/trace_trigger
+
+# HTC SSD Thermal - BEGIN
+    chown system system /sys/power/thermal_monitor
+
+# HTC SSD Thermal - END
+
+service thermal-engine /system/bin/thermal-engine
+    class main
+    user root
+    group root
+
+service pnpmgr /system/bin/pnpmgr
+    class core
+    user root
+
+service thermal-monitor /system/bin/thermal-monitor
+    class main
+    user root
+
+service memlock /system/bin/memlock
+    class main
+    cgroup bg
+    user root
+
+on property:init.svc.thermal-engine=stopped
+    write /sys/power/pnpmgr/thermal/thermal_final_bcpu 999999999
+    write /sys/power/pnpmgr/thermal/thermal_final_lcpu 999999999
+    write /sys/power/pnpmgr/thermal/thermal_final_gpu 999999999
+    write /sys/power/pnpmgr/thermal/thermal_batt 0
+    write /sys/power/pnpmgr/cluster/big/cpu0/thermal_freq 999999999
+    write /sys/power/pnpmgr/cluster/big/cpu1/thermal_freq 999999999
+    write /sys/power/pnpmgr/cluster/big/cpu2/thermal_freq 999999999
+    write /sys/power/pnpmgr/cluster/big/cpu3/thermal_freq 999999999
+    write /sys/power/pnpmgr/cluster/little/cpu0/thermal_freq 999999999
+    write /sys/power/pnpmgr/cluster/little/cpu1/thermal_freq 999999999
+    write /sys/power/pnpmgr/cluster/little/cpu2/thermal_freq 999999999
+    write /sys/power/pnpmgr/cluster/little/cpu3/thermal_freq 999999999
+
+#on property:init.svc.bootanim=running
+# remove 8994 setting, because 8996 is not A53/A57 
+
+service clockd /system/bin/clockd
+    class main
+    user root
+
+service qb_offmode_alarm /system/bin/qb_offmode_alarm
+    class main
+    user root
+    disabled
+    oneshot
+
+service zchgd_offmode /system/bin/zchgd -pseudooffmode -autostop -poffmodewarn
+    user root
+    group root graphics
+    disabled
+
+service setfps /system/bin/sh /system/etc/setfps.sh
+    user root
+    disabled
+    oneshot
+
+on property:display.setfps=*
+    start setfps
+
+service setFOTA /system/bin/sh /system/etc/setFOTAfreq.sh
+    class main
+    user root
+    disabled
+    oneshot
+
+on property:init.svc.bootanim=running
+    start setFOTA
+
+on property:sys.boot_completed=1
+    stop setFOTA

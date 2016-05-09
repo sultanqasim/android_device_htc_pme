@@ -1,0 +1,25 @@
+import init.hosd.common.rc
+import init.hosd.ftm.htc_pme.rc
+#
+# import init.hosd.usb.rc for non-fusion project.
+# import init.hosd_fusion.usb.rc for fusion project.
+# You can reference above rc file on device/htc/common
+#
+import init.hosd.usb.rc
+
+#++ Modem BSP
+import init.hosd.cradio.rc
+#-- Modem BSP
+
+#++ Batt
+on property:ro.boot.mode=offmode_charging
+  wait /dev/block/bootdevice/by-name/system
+  mount ext4 /dev/block/bootdevice/by-name/system /system ro barrier=1
+  start hvdcp_opti
+#-- Batt
+
+#++ Storage
+on boot
+    # exfat
+    insmod /texfat.ko
+#-- Storage

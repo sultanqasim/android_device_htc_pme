@@ -128,17 +128,9 @@ PRODUCT_PACKAGES += \
     power.msm8996
 
 # Ramdisk
-PRODUCT_PACKAGES += \
-    init.qcom.bt.sh \
-    init.qcom.ril.sh
-
-PRODUCT_PACKAGES += \
-    fstab.qcom \
-    init.mmi.boot.sh \
-    init.mmi.touch.sh \
-    init.mmi.usb.rc \
-    init.qcom.rc \
-    ueventd.qcom.rc
+# let's just be lazy and do a recursive copy for now
+PRODUCT_COPY_FILES += \
+    $(call find-copy-subdir-files,*,$(LOCAL_PATH)/rootdir/etc,root)
 
 # RIL
 PRODUCT_PACKAGES += \
