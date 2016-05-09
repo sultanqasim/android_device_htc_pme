@@ -165,6 +165,3 @@ PRODUCT_PACKAGES += \
     wcnss_service
 
 PRODUCT_GMS_CLIENTID_BASE := android-htc
-
-$(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
-$(call inherit-product, vendor/cm/config/common_full_phone.mk)
