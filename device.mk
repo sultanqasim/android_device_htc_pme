@@ -90,6 +90,10 @@ PRODUCT_PACKAGES += \
 #PRODUCT_PACKAGES += \
 #    gps.msm8996
 
+# HTC Logging functions
+PRODUCT_PACKAGES += \
+    liblog_htc
+
 # IRSC
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/sec_config:system/etc/sec_config
