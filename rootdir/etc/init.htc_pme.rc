@@ -171,6 +171,6 @@ service htcdcpd /system/bin/htcdcpd
 service emmcfw /system/bin/emmcfw
     class main
     user root
-    disable
+    disabled
     oneshot
 # HTC storage - END

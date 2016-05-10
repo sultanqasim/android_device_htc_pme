@@ -115,14 +115,6 @@ service wv-prov /system/bin/hcheck-v2
     disabled
     oneshot
 
-# bugreport is triggered by the KEY_VOL-UP and KEY_VOL-DOWN keycodes
-service bugreport /system/bin/dumpstate -d -p -B \
- -o /data/data/com.android.shell/files/bugreports/bugreport
-    disabled
-    cgroup bg
-    oneshot
-    keycodes 114 115
-
 # when temperature protection is disabled, bg anr is disabled as well
 on property:ro.boot.temp_protect=0
     setprop profiler.debug.hide_bg_anr "1"
