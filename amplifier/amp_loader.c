@@ -55,6 +55,10 @@ static int amp_load_sequence(FILE *seq, int amp_fd) {
             break;
         }
 
+        // hack
+        for (int i = 0; i < length; i++)
+            buff[i] = buff[i] >> 4 | ((buff[i] & 0xF) << 4);
+
         if (do_write) {
             len_written = write(amp_fd, buff, length);
             if (len_written < length) {
