@@ -66,6 +66,7 @@ PRODUCT_COPY_FILES += \
 
 # Audio
 PRODUCT_PACKAGES += \
+    amp_loader \
     audiod \
     audio.a2dp.default \
     audio.primary.msm8996 \
