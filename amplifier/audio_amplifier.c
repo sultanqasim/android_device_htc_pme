@@ -32,6 +32,7 @@
 #include <cutils/log.h>
 #include <hardware/audio_amplifier.h>
 #include <system/audio.h>
+#include <tinyalsa/asoundlib.h>
 
 #define UNUSED __attribute__((unused))
 
@@ -40,12 +41,82 @@
 #define ENABLE_SEQ  "/etc/tfa9888_enable.asq"
 #define DISABLE_SEQ "/etc/tfa9888_disable.asq"
 
+#define SND_CARD        0
+#define AMP_PCM_DEV     47
+#define AMP_MIXER_CTL   "QUAT_MI2S_RX_DL_HL Switch"
+
 typedef struct amp_device {
     amplifier_device_t amp_dev;
     audio_mode_t current_mode;
 } amp_device_t;
 
 static amp_device_t *amp_dev = NULL;
+
+static struct pcm_config amp_pcm_config = {
+    .channels = 1,
+    .rate = 48000,
+    .period_size = 0,
+    .period_count = 4,
+    .format = 0,
+    .start_threshold = 0,
+    .stop_threshold = INT_MAX,
+    .avail_min = 0,
+};
+
+struct pcm *tfa_clocks_on(struct mixer *mixer)
+{
+    struct mixer_ctl *ctl;
+    struct pcm *pcm;
+    struct pcm_params *pcm_params;
+
+    ctl = mixer_get_ctl_by_name(mixer, AMP_MIXER_CTL);
+    if (ctl == NULL) {
+        ALOGE("%s: Could not find %s", __func__, AMP_MIXER_CTL);
+        return NULL;
+    }
+
+    pcm_params = pcm_params_get(SND_CARD, AMP_PCM_DEV, PCM_OUT);
+    if (pcm_params == NULL) {
+        ALOGE("Could not get the pcm_params");
+        return NULL;
+    }
+
+    amp_pcm_config.period_count = pcm_params_get_max(pcm_params, PCM_PARAM_PERIODS);
+    pcm_params_free(pcm_params);
+
+    mixer_ctl_set_value(ctl, 0, 1);
+    pcm = pcm_open(SND_CARD, AMP_PCM_DEV, PCM_OUT, &amp_pcm_config);
+    if (!pcm) {
+        ALOGE("failed to open pcm at all??");
+        return NULL;
+    }
+    if (!pcm_is_ready(pcm)) {
+        ALOGE("failed to open pcm device: %s", pcm_get_error(pcm));
+        pcm_close(pcm);
+        return NULL;
+    }
+
+    ALOGV("clocks: ON");
+    return pcm;
+}
+
+int tfa_clocks_off(struct mixer *mixer, struct pcm *pcm)
+{
+    struct mixer_ctl *ctl;
+
+    pcm_close(pcm);
+
+    ctl = mixer_get_ctl_by_name(mixer, AMP_MIXER_CTL);
+    if (ctl == NULL) {
+        ALOGE("%s: Could not find %s", __func__, AMP_MIXER_CTL);
+        return -ENODEV;
+    } else {
+        mixer_ctl_set_value(ctl, 0, 0);
+    }
+
+    ALOGV("clocks: OFF");
+    return 0;
+}
 
 static int amp_load_sequence(FILE *seq, int amp_fd) {
     char buff[255];
@@ -166,6 +237,9 @@ static int amp_dev_close(hw_device_t *device)
 static int amp_module_open(const hw_module_t *module, UNUSED const char *name,
         hw_device_t **device)
 {
+    struct mixer *mixer;
+    struct pcm *pcm;
+
     if (amp_dev) {
         ALOGE("%s:%d: Unable to open second instance of TFA9888 amplifier\n",
                 __func__, __LINE__);
@@ -196,10 +270,20 @@ static int amp_module_open(const hw_module_t *module, UNUSED const char *name,
 
     amp_dev->current_mode = AUDIO_MODE_NORMAL;
 
+    mixer = mixer_open(SND_CARD);
+    if (mixer == NULL) {
+        ALOGE("failed to open mixer");
+        return -ENOMEM;
+    }
+
     *device = (hw_device_t *) amp_dev;
 
     ALOGW("%s: initializing TFA9888 amplifier", __func__);
+    pcm = tfa_clocks_on(mixer);
     amp_load_seq(INIT_SEQ);
+    tfa_clocks_off(mixer, pcm);
+
+    mixer_close(mixer);
 
     return 0;
 }
